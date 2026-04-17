@@ -87,7 +87,9 @@ def create_provider(data :dict):
                 provider_password=guard.hash_password(data["provider_password"]), #password has its unique salt, if things go wrong check guard class
                 provider_email=data["provider_email"],
                 provider_desc=data["provider_desc"],
-                provider_img=data["provider_img"]
+                provider_img=data["provider_img"],
+                provider_location_lat=data["provider_location_lat"],
+                provider_location_lon=data["provider_location_lon"],
             )
 
         result = conn.execute(query)
@@ -207,6 +209,12 @@ def unassign_service(provider_id :int, service_id :int):
     except Exception as err:
         return {"message":err}
 
+
+#--Search--#
+@app.get("/providers/search")
+#radius is in (km)
+def search(name :str = None, service :str = None, lat :float = None, lon :float = None, radius :float = 10.0):
+    pass
 
 if __name__ == "__main__":
     uvicorn.run(app)
