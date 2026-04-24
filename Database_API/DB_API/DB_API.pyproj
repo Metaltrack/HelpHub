@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>625a3bc4-27c0-4962-9130-23bfc525196a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>DB_API.py</StartupFile>
+    <StartupFile>Gateway.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,8 +21,27 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DB_API.py" />
+    <Compile Include="DB.py" />
+    <Compile Include="Gateway.py" />
+    <Compile Include="model.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="OtpGenerator.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="passwordHandler.py" />
+    <Compile Include="routes\provider.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="routes\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="routes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".env" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
