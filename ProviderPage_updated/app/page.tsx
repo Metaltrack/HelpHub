@@ -115,7 +115,7 @@ export default function Home() {
         }
   }
 
-    const handleLogin = async (data: LoginFormData) => {
+    const handleLogin = async (data: LoginFormData): Promise<string | null> => {
         try {
             const res = await fetch(`${API}/providers/login`, {
                 method: "POST",
@@ -128,14 +128,16 @@ export default function Home() {
             const result = await res.json()
 
             if (!res.ok) {
-                throw new Error(result.detail)
+                return result.detail || "Login failed"
             }
 
             setCurrentProvider(result.provider)
             setProviderView("profile")
 
-        } catch (err: any) {
-            alert(err.message) // later replace with toast
+            return null // success
+
+        } catch (err) {
+            return "Server error. Try again."
         }
     }
 
@@ -158,39 +160,82 @@ export default function Home() {
   }
 
   // Customer handlers
-  const handleCustomerRegistration = (data: CustomerRegistrationData) => {
-    console.log("Customer registration:", data)
+    const handleCustomerRegistration = async (data: CustomerRegistrationData) => {
+        try {
+            const res = await fetch(`${API}/users/register`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
 
-    const customer: Customer = {
-      id: 1,
-      name: data.name,
-      phone: data.phone,
-      email: data.email,
-      location_lat: data.locationLat || 0,
-      location_lon: data.locationLon || 0,
-      address: data.address,
+            const result = await res.json()
+
+            if (!res.ok) {
+                throw new Error(result.detail || "Registration failed")
+            }
+
+            if (result.user) {
+                setCurrentCustomer({
+                    id: result.user.user_id,
+                    name: result.user.user_name,
+                    phone: result.user.user_phone,
+                    email: result.user.user_email,
+                    location_lat: result.user.user_lat,
+                    location_lon: result.user.user_lon,
+                    address: ""
+                })
+            }
+            setCustomerView("home")
+
+        } catch (err: any) {
+            console.error(err.message)
+        }
     }
 
-    setCurrentCustomer(customer)
-    setCustomerView("home")
-  }
+    const handleCustomerLogin = async (data: any) => {
+        try {
+            const res = await fetch(`${API}/users/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    phone: data.phone,
+                    password: data.password
+                })
+            })
 
-  const handleCustomerLogin = (data: CustomerLoginData) => {
-    console.log("Customer login:", data)
+            const result = await res.json()
 
-    const customer: Customer = {
-      id: 1,
-      name: "Jane Smith",
-      phone: "555-0123",
-      email: data.email,
-      location_lat: 40.7128,
-      location_lon: -74.006,
-      address: "New York, NY",
+            if (!res.ok) {
+                throw new Error(result.detail)
+            }
+
+            console.log("Login success:", result)
+
+            // ✅ SET CUSTOMER STATE (THIS WAS MISSING)
+            setCurrentCustomer({
+                id: result.user.user_id,
+                name: result.user.user_name,
+                phone: result.user.user_phone,
+                email: result.user.user_email,
+                location_lat: result.user.user_lat,
+                location_lon: result.user.user_lon,
+                address: ""
+            })
+
+            // ✅ move to home page
+            setCustomerView("home")
+
+            // optional
+            localStorage.setItem("user", JSON.stringify(result.user))
+
+        } catch (err: any) {
+            alert(err.message)
+        }
     }
-
-    setCurrentCustomer(customer)
-    setCustomerView("home")
-  }
 
   const handleCustomerForgotPassword = () => {
     alert("Forgot password functionality would be implemented here")
@@ -320,13 +365,15 @@ export default function Home() {
           />
         )
 
-      case "jobs":
-        return (
-          <ProviderJobsPage
-            onLogout={handleLogout}
-            onNavigateToProfile={() => setProviderView("profile")}
-          />
-        )
+        case "jobs":
+            return currentProvider ? (
+                <ProviderJobsPage
+                    onLogout={handleLogout}
+                    onNavigateToProfile={() => setProviderView("profile")}
+                    provider={currentProvider}   
+                    API={API}                    
+                />
+            ) : null
 
       case "profile":
         return currentProvider ? (
@@ -371,13 +418,18 @@ export default function Home() {
           />
         ) : null
 
-      case "home":
-        return currentCustomer ? (
-          <CustomerHomePage
-            onLogout={handleLogout}
-            onNavigateToProfile={() => setCustomerView("profile")}
-          />
-        ) : null
+        case "home":
+            if (!currentCustomer) {
+                return <div className="p-4">Loading user...</div>
+            }
+
+            return (
+                <CustomerHomePage
+                    onLogout={handleLogout}
+                    onNavigateToProfile={() => setCustomerView("profile")}
+                    API={API}
+                />
+            )
 
       case "login":
       default:

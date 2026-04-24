@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field"
 import type { Provider } from "@/types/provider"
+import { useEffect } from "react"
 
 interface ProfilePageProps {
   provider: Provider
@@ -18,13 +19,75 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ provider, onUpdate, onLogout, onNavigateToJobs }: ProfilePageProps) {
-  const [formData, setFormData] = useState<Provider>(provider)
+    const [formData, setFormData] = useState<Provider>(provider)
+    type Service = {
+        id: number
+        service_type: string
+    }
+
+    const [services, setServices] = useState<Service[]>([])
+    const [selectedServices, setSelectedServices] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [locationStatus, setLocationStatus] = useState("")
   const [errors, setErrors] = useState<Partial<Record<keyof Provider, string>>>({})
   const [successMessage, setSuccessMessage] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        const fetchProviderServices = async () => {
+            try {
+                // STEP 1: Get selected IDs
+                const res1 = await fetch(`http://localhost:8000/providers/${provider.provider_phone}/services`)
+                const data1 = await res1.json()
+
+                const serviceIds: number[] = data1.service_ids || []
+                setSelectedServices(serviceIds)
+
+                // STEP 2: Get all services
+                const res2 = await fetch("http://localhost:8000/providers/services")
+                const data2 = await res2.json()
+
+                const servicesArray = Array.isArray(data2) ? data2 : data2.services || []
+
+                // STEP 3: Map IDs → names
+                const selectedServiceNames = servicesArray
+                    .filter((service: { id: number; service_type: string }) =>
+                        serviceIds.includes(service.id)
+                    )
+                    .map((service: { id: number; service_type: string }) =>
+                        service.service_type
+                    )
+
+                // STEP 4: Store names in formData
+                setFormData(prev => ({
+                    ...prev,
+                    provider_service: selectedServiceNames.join(", ") // <-- string
+                }))
+
+            } catch (err) {
+                console.error("Failed to fetch provider services", err)
+            }
+        }
+
+        if (provider?.provider_phone) {
+            fetchProviderServices()
+        }
+    }, [provider])
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const res = await fetch("http://localhost:8000/providers/services")
+                const data = await res.json()
+                setServices(Array.isArray(data) ? data : data.services || [])
+            } catch (err) {
+                console.error("Failed to fetch services", err)
+            }
+        }
+
+        fetchServices()
+    }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -135,7 +198,9 @@ export function ProfilePage({ provider, onUpdate, onLogout, onNavigateToJobs }: 
                     email: formData.provider_email,
                     locationLat: formData.provider_location_lat,
                     locationLon: formData.provider_location_lon,
-                    provider_desc: formData.provider_desc
+                    provider_desc: formData.provider_desc,
+                    provider_img: formData.provider_img,
+                    service_ids: selectedServices
                 })
             })
 
@@ -330,19 +395,35 @@ export function ProfilePage({ provider, onUpdate, onLogout, onNavigateToJobs }: 
             <CardContent className="pt-0">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="provider_service" className="text-sm font-medium">Service Type</FieldLabel>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="provider_service"
-                      name="provider_service"
-                      type="text"
-                      placeholder="e.g., Plumbing, Electrical, Cleaning"
-                      value={formData.provider_service || ""}
-                      onChange={handleChange}
-                      className="h-10 bg-secondary/50 pl-10 transition-all duration-200 hover:border-accent hover:bg-card focus:border-accent focus:bg-card focus:ring-2 focus:ring-accent/20 sm:h-11"
-                    />
-                  </div>
+                    <FieldLabel className="text-sm font-medium">Service Type</FieldLabel>
+
+                                  <select
+                                      className="w-full rounded-md border bg-secondary/50 p-2"
+                                      value={selectedServices[0] || ""}
+                                      onChange={(e) => {
+                                          const selectedId = Number(e.target.value)
+
+                                          setSelectedServices([selectedId]) // store as array (backend expects array)
+
+                                          // also update service name instantly
+                                          const selectedService = services.find(
+                                              (s: { id: number; service_type: string }) => s.id === selectedId
+                                          )
+
+                                          setFormData(prev => ({
+                                              ...prev,
+                                              provider_service: selectedService?.service_type || ""
+                                          }))
+                                      }}
+                                  >
+                                      <option value="">Select a service</option>
+
+                                      {services.map((service: { id: number; service_type: string }) => (
+                                          <option key={service.id} value={service.id}>
+                                              {service.service_type}
+                                          </option>
+                                      ))}
+                                  </select>
                 </Field>
 
                 <Field>

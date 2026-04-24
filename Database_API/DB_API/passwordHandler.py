@@ -11,4 +11,4 @@ class password_manager():
         return bcrypt.hashpw(pwd.encode("utf-8"), salt)
     
     def check_password(self, og_pass, pwd) -> bool:
-        return True if(bcrypt.checkpw(pwd.encode("utf-8"), og_pass)) else False
+        return True if(bcrypt.checkpw(pwd.encode("utf-8"), og_pass.encode("utf-8"))) else False

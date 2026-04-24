@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface CustomerLoginData {
-  email: string
-  password: string
+    phone: string
+    password: string
 }
 
 interface CustomerLoginFormProps {
@@ -20,21 +20,21 @@ export function CustomerLoginForm({
   onNavigateToRegister,
   onForgotPassword,
 }: CustomerLoginFormProps) {
-  const [formData, setFormData] = useState<CustomerLoginData>({
-    email: '',
-    password: '',
-  })
+    const [formData, setFormData] = useState<CustomerLoginData>({
+        phone: '',
+        password: '',
+    })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Enter a valid email'
-    }
+      if (!formData.phone.trim()) {
+          newErrors.phone = 'Phone number is required'
+      } else if (!/^\d{10}$/.test(formData.phone)) {
+          newErrors.phone = 'Enter a valid 10-digit phone number'
+      }
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required'
     } else if (formData.password.length < 6) {
@@ -86,22 +86,29 @@ export function CustomerLoginForm({
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl border-2 border-accent/10 p-6 sm:p-8 shadow-sm"
         >
-          {/* Email Field */}
-          <div className="mb-5">
-            <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 w-5 h-5 text-accent/60" />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter your email"
-                className="w-full h-11 pl-10 pr-4 border-2 border-accent/10 rounded-lg focus:border-accent focus:outline-none transition-colors"
-              />
-            </div>
-            {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
-          </div>
+          {/* Phone Field */}
+                  <div className="mb-5">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Phone Number
+                      </label>
+
+                      <div className="relative">
+                          <Phone className="absolute left-3 top-3 w-5 h-5 text-accent/60" />
+
+                          <input
+                              type="tel"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              placeholder="Enter your phone number"
+                              className="w-full h-11 pl-10 pr-4 border-2 border-accent/10 rounded-lg focus:border-accent focus:outline-none"
+                          />
+                      </div>
+
+                      {errors.phone && (
+                          <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+                      )}
+                  </div>
 
           {/* Password Field */}
           <div className="mb-2">

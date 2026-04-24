@@ -5,12 +5,14 @@ import { MapPin, Phone, Mail, User, Navigation } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface CustomerRegistrationData {
-  name: string
-  phone: string
-  email: string
-  locationLat?: number
-  locationLon?: number
-  address?: string
+    name: string
+    phone: string
+    email: string
+    password: string
+    confirmPassword: string
+    locationLat?: number
+    locationLon?: number
+    address?: string
 }
 
 interface CustomerRegistrationFormProps {
@@ -22,11 +24,13 @@ export function CustomerRegistrationForm({
   onSubmit,
   onNavigateToLogin,
 }: CustomerRegistrationFormProps) {
-  const [formData, setFormData] = useState<CustomerRegistrationData>({
-    name: '',
-    phone: '',
-    email: '',
-  })
+    const [formData, setFormData] = useState<CustomerRegistrationData>({
+        name: '',
+        phone: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [locationMessage, setLocationMessage] = useState('')
@@ -50,6 +54,17 @@ export function CustomerRegistrationForm({
     if (formData.locationLat === undefined || formData.locationLon === undefined) {
       newErrors.location = 'Location is required'
     }
+      if (!formData.password.trim()) {
+          newErrors.password = 'Password is required'
+      } else if (formData.password.length < 6) {
+          newErrors.password = 'Password must be at least 6 characters'
+      }
+
+      if (!formData.confirmPassword.trim()) {
+          newErrors.confirmPassword = 'Confirm your password'
+      } else if (formData.password !== formData.confirmPassword) {
+          newErrors.confirmPassword = 'Passwords do not match'
+      }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -174,7 +189,41 @@ export function CustomerRegistrationForm({
               />
             </div>
             {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
-          </div>
+            </div>
+
+                  {/* Password Field */}
+                  <div className="mb-5">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
+                      <div className="relative">
+                          <input
+                              type="password"
+                              name="password"
+                              value={formData.password}
+                              onChange={handleInputChange}
+                              placeholder="Enter your password"
+                              className="w-full h-11 pl-4 pr-4 border-2 border-accent/10 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                          />
+                      </div>
+                      {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
+                  </div>
+
+                  {/* Confirm Password Field */}
+                  <div className="mb-5">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Confirm Password</label>
+                      <div className="relative">
+                          <input
+                              type="password"
+                              name="confirmPassword"
+                              value={formData.confirmPassword}
+                              onChange={handleInputChange}
+                              placeholder="Confirm your password"
+                              className="w-full h-11 pl-4 pr-4 border-2 border-accent/10 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                          />
+                      </div>
+                      {errors.confirmPassword && (
+                          <p className="text-xs text-red-600 mt-1">{errors.confirmPassword}</p>
+                      )}
+                  </div>
 
           {/* Location Field */}
           <div className="mb-6">

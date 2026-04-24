@@ -97,7 +97,7 @@ export function CustomerProfilePage({
             <div className="space-y-4">
               {/* Avatar */}
               <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center text-3xl font-bold text-primary">
-                {formData.name.charAt(0).toUpperCase()}
+                              {(formData?.name?.charAt(0) || "U").toUpperCase()}
               </div>
 
               {/* Name Field */}
@@ -197,13 +197,13 @@ export function CustomerProfilePage({
                 <div>
                   <label className="text-xs font-bold text-gray-600 mb-2 block">Latitude</label>
                   <div className="bg-gray-100 rounded-lg p-3 border border-gray-200">
-                    <p className="font-mono text-sm text-gray-700">{formData.location_lat.toFixed(4)}</p>
+                                      <p className="font-mono text-sm text-gray-700">{formData.location_lat ? formData.location_lat.toFixed(4) : "N/A"}</p>
                   </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-600 mb-2 block">Longitude</label>
                   <div className="bg-gray-100 rounded-lg p-3 border border-gray-200">
-                    <p className="font-mono text-sm text-gray-700">{formData.location_lon.toFixed(4)}</p>
+                                      <p className="font-mono text-sm text-gray-700">{formData.location_lon ? formData.location_lon.toFixed(4) : "N/A"}</p>
                   </div>
                 </div>
               </div>

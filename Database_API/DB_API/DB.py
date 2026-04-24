@@ -6,7 +6,7 @@ import sqlalchemy as db
 import json
 
 #-------------------------------connection---------------------------------------#
-engine = db.create_engine("mysql+pymysql://panda:panda@localhost:3306/hh_schema")
+engine = db.create_engine("mysql+pymysql://panda:panda@localhost:3306/hh_schema", pool_pre_ping=True, pool_recycle=3600 )
 conn = engine.connect()
 metadata = db.MetaData()
 
@@ -19,6 +19,6 @@ provider_service_table = db.Table("workerservice", metadata, autoload_with=engin
 
 user_table = db.Table("user_table", metadata, autoload_with=engine)
 ratings_table = db.Table("ratings_table", metadata, autoload_with=engine)
-service_request = db.Table("service_request", metadata, autoload_with=engine)
+service_request = db.Table("requests", metadata, autoload_with=engine)
 
 test_table = db.Table("test_table", metadata, autoload_with=engine)

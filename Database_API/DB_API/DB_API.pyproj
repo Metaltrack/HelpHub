@@ -30,7 +30,13 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="passwordHandler.py" />
+    <Compile Include="routes\jobs.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="routes\provider.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="routes\user.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="routes\__init__.py">

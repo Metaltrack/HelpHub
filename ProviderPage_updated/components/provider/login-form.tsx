@@ -9,7 +9,7 @@ import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field
 import type { LoginFormData } from "@/types/provider"
 
 interface LoginFormProps {
-  onSubmit: (data: LoginFormData) => void
+  onSubmit: (data: LoginFormData) => Promise<string | null> // return error
   onNavigateToRegister: () => void
   onForgotPassword: () => void
 }
@@ -47,15 +47,27 @@ export function LoginForm({ onSubmit, onNavigateToRegister, onForgotPassword }: 
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validate()) {
-      setIsLoading(true)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      onSubmit(formData)
-      setIsLoading(false)
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+
+        if (!validate()) return
+
+        setIsLoading(true)
+
+        const error = await onSubmit(formData)
+
+        if (error) {
+            if (error === "Invalid password") {
+                setErrors({ password: "Wrong password" })
+            } else if (error === "Provider not found") {
+                setErrors({ phone: "Account not found" })
+            } else {
+                setErrors({ phone: error })
+            }
+        }
+
+        setIsLoading(false)
     }
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/50 p-4 sm:p-6 lg:p-8">

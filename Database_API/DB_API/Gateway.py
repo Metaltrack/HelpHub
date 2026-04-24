@@ -6,6 +6,8 @@ import DB
 import uvicorn
 import passwordHandler
 from routes import provider
+from routes import jobs
+from routes import user
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -13,6 +15,8 @@ app =FastAPI(title="db")
 guard = passwordHandler.password_manager()
 
 app.include_router(provider.router, prefix="/providers")
+app.include_router(jobs.router, prefix="/jobs")
+app.include_router(user.router, prefix="/users")
 
 origins = [
         "http://localhost:3000"

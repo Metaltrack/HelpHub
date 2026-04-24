@@ -56,6 +56,7 @@ export function RegistrationForm({ onSubmit, onNavigateToLogin }: RegistrationFo
           locationLat: position.coords.latitude,
           locationLon: position.coords.longitude,
         }))
+            setErrors((prev) => ({ ...prev, locationLat: undefined }))
         setLocationStatus(`Location obtained: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`)
         setIsGettingLocation(false)
       },
@@ -107,6 +108,10 @@ export function RegistrationForm({ onSubmit, onNavigateToLogin }: RegistrationFo
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match"
     }
+
+      if (formData.locationLat === null || formData.locationLon === null) {
+          newErrors.locationLat = "Location required to continue"
+      }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -297,6 +302,9 @@ export function RegistrationForm({ onSubmit, onNavigateToLogin }: RegistrationFo
                   <p className={`text-xs sm:text-sm ${formData.locationLat ? "text-success" : "text-destructive"}`}>
                     {locationStatus}
                   </p>
+                )}
+                {errors.locationLat && (
+                    <FieldError>{errors.locationLat}</FieldError>
                 )}
               </Field>
 

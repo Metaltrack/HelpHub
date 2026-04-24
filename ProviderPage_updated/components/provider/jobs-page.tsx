@@ -4,23 +4,50 @@ import { useState } from "react"
 import { MapPin, Phone, Mail, Clock, DollarSign, AlertCircle, CheckCircle, Trash2, User, Navigation } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Job } from "@/types/customer"
-import { mockJobs } from "@/utils/mock-data"
 import { calculateDistance } from "@/utils/geo"
+import { useEffect } from "react"
+import type { Provider } from "@/types/provider"
 
 interface ProviderJobsPageProps {
   onLogout: () => void
-  onNavigateToProfile?: () => void
+    onNavigateToProfile?: () => void
+    provider: Provider
+    API: string
 }
 
 type JobStatus = "pending" | "accepted" | "completed"
 
-export function ProviderJobsPage({ onLogout, onNavigateToProfile }: ProviderJobsPageProps) {
-  const [jobs, setJobs] = useState<Job[]>(mockJobs)
+export function ProviderJobsPage({ onLogout, onNavigateToProfile, provider, API }: ProviderJobsPageProps) {
+    const [jobs, setJobs] = useState<Job[]>([])
   const [activeFilter, setActiveFilter] = useState<JobStatus | "all">("all")
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
-  // Mock provider location - in real app, this comes from logged-in provider data
-  const providerLat = 40.7128
-  const providerLon = -74.006
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+
+    const fetchJobs = async () => {
+        if (!provider.provider_phone) return
+
+        try {
+            const res = await fetch(`${API}/providers/${provider.provider_phone}/jobs`)
+
+            const data = await res.json()
+
+            console.log("JOBS API RESPONSE:", data)
+
+            if (Array.isArray(data)) {
+                setJobs(data)
+            } else {
+                console.error("Invalid jobs response:", data)
+                setJobs([]) // fallback
+            }
+
+        } catch (err) {
+            console.error("Fetch error:", err)
+            setJobs([])
+        }
+    }
+
+    useEffect(() => {
+        fetchJobs()
+    }, [])
 
   const filteredJobs = activeFilter === "all" ? jobs : jobs.filter((job) => job.status === activeFilter)
 
@@ -64,6 +91,9 @@ export function ProviderJobsPage({ onLogout, onNavigateToProfile }: ProviderJobs
         return "text-gray-600 bg-gray-50"
     }
   }
+
+    const providerLat = provider.provider_location_lat || 0
+    const providerLon = provider.provider_location_lon || 0
 
   return (
     <div className="min-h-screen bg-background">
