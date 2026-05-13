@@ -1,18 +1,42 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MapPin, Star, Search, Phone, Loader2 } from "lucide-react"
+import { MapPin, Star, Search, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
+export function CustomerHomePage({ API, user, onLogout, onNavigateToProfile }: any) {
+
+    // =========================
+    // STATE
+    // =========================
+    const [selectedProvider, setSelectedProvider] = useState<any>(null)
+    const [jobDescription, setJobDescription] = useState("")
+    const [budget, setBudget] = useState("")
+    const [priority, setPriority] = useState("low")
+
     const [searchQuery, setSearchQuery] = useState("")
     const [userLocation, setUserLocation] = useState<any>(null)
     const [providers, setProviders] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
 
     // =========================
-    // GET USER LOCATION
+    // OPEN MODAL
+    // =========================
+    const openJobModal = (provider: any) => {
+        setSelectedProvider(provider)
+    }
+
+    const closeModal = () => {
+        setSelectedProvider(null)
+        setJobDescription("")
+        setBudget("")
+        setPriority("low")
+    }
+
+    // =========================
+    // GET LOCATION
     // =========================
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
@@ -23,14 +47,13 @@ export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
                 })
             },
             () => {
-                // fallback (Pune)
-                setUserLocation({ lat: 18.6298, lon: 73.7997 })
+                setUserLocation({ lat: 18.6298, lon: 73.7997 }) // fallback
             }
         )
     }, [])
 
     // =========================
-    // FETCH PROVIDERS (AUTO)
+    // FETCH PROVIDERS
     // =========================
     useEffect(() => {
         if (!userLocation) return
@@ -41,10 +64,8 @@ export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
                 const res = await fetch(
                     `${API}/providers/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&service=${searchQuery}`
                 )
-
                 const data = await res.json()
                 setProviders(data.providers || [])
-
             } catch (err) {
                 console.error("Fetch failed:", err)
             } finally {
@@ -52,12 +73,65 @@ export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
             }
         }
 
-        const delayDebounce = setTimeout(fetchProviders, 300) // debounce
-
-        return () => clearTimeout(delayDebounce)
+        const delay = setTimeout(fetchProviders, 300)
+        return () => clearTimeout(delay)
 
     }, [userLocation, searchQuery])
 
+    // =========================
+    // SUBMIT JOB
+    // =========================
+    const submitJob = async () => {
+        if (!selectedProvider) return
+
+        if (!jobDescription || !budget) {
+            alert("Please fill all fields")
+            return
+        }
+
+        setSubmitting(true)
+
+        try {
+            const res = await fetch(`${API}/jobs/create`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: user.user_id,
+                    provider_id: selectedProvider.id,
+
+                    customer_name: user.user_name,
+                    customer_phone: user.user_phone,
+                    customer_email: user.user_email,
+
+                    description: jobDescription,
+                    address: "User location",
+                    location_lat: userLocation.lat,
+                    location_lon: userLocation.lon,
+
+                    budget: parseFloat(budget),
+                    urgency: priority,
+                    service_type: selectedProvider.provider_service
+                })
+            })
+
+            if (!res.ok) throw new Error("Failed")
+
+            alert("Job created successfully ✅")
+            closeModal()
+
+        } catch (err) {
+            console.error(err)
+            alert("Failed to create job ❌")
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    // =========================
+    // UI
+    // =========================
     return (
         <div className="min-h-screen bg-background">
 
@@ -66,7 +140,7 @@ export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
                 <h1 className="text-xl font-bold">Nearby Services</h1>
 
                 <div className="flex gap-2">
-                    <Button onClick={() => onNavigateToProfile()}>
+                    <Button onClick={onNavigateToProfile}>
                         Profile
                     </Button>
 
@@ -89,7 +163,7 @@ export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
                 </div>
             </div>
 
-            {/* CONTENT */}
+            {/* PROVIDERS */}
             <div className="max-w-4xl mx-auto p-4">
 
                 {loading && (
@@ -131,18 +205,71 @@ export function CustomerHomePage({ API, onLogout, onNavigateToProfile }: any) {
 
                             <Button
                                 className="mt-3"
-                                onClick={() => {
-                                    window.location.href = `tel:${p.provider_phone}`
-                                }}
+                                onClick={() => openJobModal(p)}
                             >
-                                <Phone className="w-4 h-4 mr-2" />
-                                Call
+                                Create Job
                             </Button>
-
                         </div>
                     ))}
                 </div>
             </div>
+
+            {/* =========================
+                JOB MODAL
+            ========================= */}
+            {selectedProvider && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-xl w-[400px] space-y-4 relative">
+
+                        <button
+                            onClick={closeModal}
+                            className="absolute top-3 right-3"
+                        >
+                            <X />
+                        </button>
+
+                        <h2 className="font-bold text-xl">
+                            Create Job
+                        </h2>
+
+                        <p className="text-sm text-gray-500">
+                            Provider: {selectedProvider.provider_name}
+                        </p>
+
+                        <textarea
+                            className="w-full border p-2 rounded"
+                            placeholder="Describe your issue"
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                        />
+
+                        <Input
+                            placeholder="Budget"
+                            value={budget}
+                            onChange={(e) => setBudget(e.target.value)}
+                        />
+
+                        <select
+                            className="w-full border p-2 rounded"
+                            value={priority}
+                            onChange={(e) => setPriority(e.target.value)}
+                        >
+                            <option value="low">Low Priority</option>
+                            <option value="medium">Medium Priority</option>
+                            <option value="high">High Priority (+ extra pay)</option>
+                        </select>
+
+                        <Button
+                            className="w-full"
+                            onClick={submitJob}
+                            disabled={submitting}
+                        >
+                            {submitting ? "Submitting..." : "Submit Job"}
+                        </Button>
+
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

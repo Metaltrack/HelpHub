@@ -69,3 +69,37 @@ def delete_job(job_id: int):
     except Exception as err:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(err))
+
+@router.post("/jobs/create")
+def create_job(data: CreateJob):
+    conn = DB.conn
+    request_table = DB.service_request
+
+    try:
+        conn.execute(
+            request_table.insert().values(
+                user_id=data.user_id,
+                provider_id=data.provider_id,
+                customer_name=data.customer_name,
+                customer_phone=data.customer_phone,
+                customer_email=data.customer_email,
+                description=data.description,
+                address=data.address,
+                location_lat=data.location_lat,
+                location_lon=data.location_lon,
+                budget=data.budget,
+                urgency=data.urgency,
+                service_type=data.service_type,
+                status="pending",
+                created_at=time.strftime('%Y-%m-%d %H:%M:%S'),
+                priority=data.urgency
+            )
+        )
+
+        conn.commit()
+
+        return {"message": "Job created successfully"}
+
+    except Exception as err:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(err))

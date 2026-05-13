@@ -39,3 +39,23 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     phone: str
     password: str
+
+from pydantic import BaseModel
+
+class CreateJob(BaseModel):
+    user_id: int
+    provider_id: int
+
+    customer_name: str
+    customer_phone: str
+    customer_email: str | None = None
+
+    description: str
+    address: str
+
+    location_lat: float
+    location_lon: float
+
+    budget: float
+    urgency: str
+    service_type: str
